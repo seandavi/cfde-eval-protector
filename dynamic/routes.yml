@@ -1,0 +1,19 @@
+http:
+  routers:
+    app:
+      rule: "Host(`127.0.0.1`)"
+      entryPoints:
+        - websecure
+      service: oauth2-proxy
+      tls: {}
+
+  services:
+    oauth2-proxy:
+      loadBalancer:
+        servers:
+          - url: "http://oauth2-proxy:4180"
+
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/localhost.crt
+      keyFile: /etc/traefik/certs/localhost.key

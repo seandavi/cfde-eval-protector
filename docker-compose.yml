@@ -1,0 +1,65 @@
+services:
+  traefik:
+    image: traefik:v3.3
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - certs:/etc/traefik/certs
+    depends_on:
+      cert-gen:
+        condition: service_completed_successfully
+    networks:
+      - proxy
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+    command:
+      - --http-address=0.0.0.0:4180
+      - --reverse-proxy=true
+      - --provider=oidc
+      - --provider-display-name=ORCID
+      - --oidc-issuer-url=https://orcid.org
+      - --scope=openid
+      - --email-domain=*
+      - --oidc-email-claim=sub
+      - --authenticated-emails-file=/etc/oauth2-proxy/allowed-orcids.txt
+      - --cookie-secret=${COOKIE_SECRET}
+      - --cookie-secure=true
+      - --cookie-domain=${DOMAIN:-localhost}
+      - --client-id=${ORCID_CLIENT_ID}
+      - --client-secret=${ORCID_CLIENT_SECRET}
+      - --redirect-url=https://${DOMAIN:-localhost}/oauth2/callback
+      - --upstream=https://cfde-eval.netlify.app/
+      - --skip-provider-button=true
+      - --pass-host-header=false
+    volumes:
+      - ./allowed-orcids.txt:/etc/oauth2-proxy/allowed-orcids.txt:ro
+    networks:
+      - proxy
+
+  # Generate self-signed certs for localhost development
+  cert-gen:
+    image: alpine:3.21
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ ! -f /certs/localhost.crt ]; then
+          apk add --no-cache openssl &&
+          openssl req -x509 -nodes -days 365 \
+            -newkey rsa:2048 \
+            -keyout /certs/localhost.key \
+            -out /certs/localhost.crt \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+        fi
+    volumes:
+      - certs:/certs
+
+volumes:
+  certs:
+
+networks:
+  proxy:

@@ -17,12 +17,16 @@ Browser → Traefik (TLS) → oauth2-proxy (ORCID OIDC) → cfde-eval.netlify.ap
 
 ### 1. Register an ORCID OAuth application
 
-Go to https://orcid.org/developer-tools and register an app.
-
-Set the redirect URI to:
-```
-https://127.0.0.1/oauth2/callback
-```
+1. Sign in to your ORCID account at https://orcid.org
+2. Go to https://orcid.org/developer-tools
+3. If this is your first app, click **Register for the free ORCID public API**
+4. Fill out the application form:
+   - **Application name**: e.g. "CFDE Eval Protector"
+   - **Application URL**: `https://127.0.0.1`
+   - **Description**: Brief description of the application
+   - **Redirect URIs**: `https://127.0.0.1/oauth2/callback`
+5. Click the save icon to register the app
+6. Note the **Client ID** (e.g. `APP-XXXXXXXXXXXX`) and **Client Secret** shown on the page
 
 ### 2. Configure environment
 
